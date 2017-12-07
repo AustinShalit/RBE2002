@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "algorithm": "cpp",
+        "bitset": "cpp",
+        "deque": "cpp",
+        "sstream": "cpp",
+        "string": "cpp",
+        "valarray": "cpp",
+        "vector": "cpp",
+        "associative_base": "cpp",
+        "complex": "cpp",
+        "iterator": "cpp",
+        "ios": "cpp",
+        "istream": "cpp",
+        "cmath": "cpp"
+    }
+}
