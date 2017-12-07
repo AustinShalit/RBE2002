@@ -1,10 +1,10 @@
 <launch>
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="/home/parallels/catkin_ws/launch/costmap_common_params.yaml" command="load" ns="global_costmap" />
-    <rosparam file="/home/parallels/catkin_ws/launch/costmap_common_params.yaml" command="load" ns="local_costmap" />
-    <rosparam file="/home/parallels/catkin_ws/launch/local_costmap_params.yaml" command="load" />
-    <rosparam file="/home/parallels/catkin_ws/launch/global_costmap_params.yaml" command="load" />
-    <rosparam file="/home/parallels/catkin_ws/launch/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(env HOME)/RBE2002/launch/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(env HOME)/RBE2002/launch/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/base_local_planner_params.yaml" command="load" />
   </node>
 </launch>
 

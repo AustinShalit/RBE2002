@@ -33,5 +33,5 @@
 
   <node pkg="robot_controller" type="robot_controller" name="robot_controller" output="screen" />
 
-  <include file="/home/parallels/catkin_ws/launch/move_base.launch" />
+  <include file="$(env HOME)/RBE2002/launch//move_base.launch" />
 </launch>
