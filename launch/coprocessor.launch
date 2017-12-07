@@ -1,0 +1,37 @@
+<launch>
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" />
+
+  <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">
+    <param name="linearUpdate" value="0.5" type="double"/>
+    <param name="angularUpdate" value="0.5"/>
+    <param name="xmin" value="-5.0"/>
+    <param name="ymin" value="-5.0"/>
+    <param name="xmax" value="5.0"/>
+    <param name="ymax" value="5.0"/>
+    <param name="delta" value="0.05"/>
+    <param name="maxRange" value="3.5"/>
+    <param name="maxUrange" value="3.0"/>
+    <param name="map_update_interval" value="0.25"/>
+    <param name="minimumScore" value="0"/>
+  </node>
+
+  <!--
+  <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
+    <param name="robot_base_frame" value="base_link"/>
+    <param name="costmap_topic" value="map"/>
+    <param name="costmap_updates_topic" value="map_updates"/>
+    <param name="visualize" value="true"/>
+    <param name="planner_frequency" value="0.33"/>
+    <param name="progress_timeout" value="30.0"/>
+    <param name="potential_scale" value="3.0"/>
+    <param name="orientation_scale" value="0.0"/>
+    <param name="gain_scale" value="1.0"/>
+    <param name="transform_tolerance" value="0.3"/>
+    <param name="min_frontier_size" value="10"/>
+  </node>
+  -->
+
+  <node pkg="robot_controller" type="robot_controller" name="robot_controller" output="screen" />
+
+  <include file="/home/parallels/catkin_ws/launch/move_base.launch" />
+</launch>

@@ -1,0 +1,57 @@
+<launch>
+
+  <rosparam param="ticks_meter">14583</rosparam>
+
+  <node pkg="xv_11_laser_driver" type="neato_laser_publisher" name="xv_11_laser_driver" clear_params="true" output="screen">
+    <param name="port" value="/dev/lidar" type="str" />
+    <param name="frame_id" value="neato_laser" type="str" />
+    <param name="scan_topic_name" value="/scan" type="str" />
+    <param name="lidar_rpm_topic_name" value="/lidar_rpm" type="str" />
+    <param name="baud_rate" value="115200" type="int" />
+  </node>
+
+  <node pkg="rostopic" type="rostopic" name="lidar_enable" args="pub lidar_enable std_msgs/Bool &quot;data: true&quot;"/>
+
+  <node pkg="rosserial_python" type="serial_node.py" name="arduino_serial_node" output="screen">
+    <param name="port" value="/dev/arduino"/>
+    <param name="baud" value="115200"/>
+  </node>
+
+  <node pkg="differential_drive" type="diff_tf.py" name="diff_tf" output="screen">
+    <rosparam param="base_width">0.21</rosparam>
+  </node>
+
+  <node pkg="differential_drive" type="pid_velocity.py" name="lpid_velocity">
+    <remap from="wheel" to="lwheel"/>
+    <remap from="motor_cmd" to="lmotor_cmd"/>
+    <remap from="wheel_vtarget" to="lwheel_vtarget"/>
+    <remap from="wheel_vel" to="lwheel_vel"/>
+    <rosparam param="Kp">200.0</rosparam>
+    <rosparam param="Ki">200.0</rosparam>
+    <rosparam param="Kd">0.0</rosparam>
+    <rosparam param="out_min">-255</rosparam>
+    <rosparam param="out_max">255</rosparam>
+    <rosparam param="rate">30</rosparam>
+    <rosparam param="timeout_ticks">20</rosparam>
+    <rosparam param="rolling_pts">5</rosparam>
+  </node>
+
+  <node pkg="differential_drive" type="pid_velocity.py" name="rpid_velocity">
+    <remap from="wheel" to="rwheel"/>
+    <remap from="motor_cmd" to="rmotor_cmd"/>
+    <remap from="wheel_vtarget" to="rwheel_vtarget"/>
+    <remap from="wheel_vel" to="rwheel_vel"/>
+    <rosparam param="Kp">200.0</rosparam>
+    <rosparam param="Ki">200.0</rosparam>
+    <rosparam param="Kd">0.0</rosparam>
+    <rosparam param="out_min">-255</rosparam>
+    <rosparam param="out_max">255</rosparam>
+    <rosparam param="rate">30</rosparam>
+    <rosparam param="timeout_ticks">20</rosparam>
+    <rosparam param="rolling_pts">5</rosparam>
+  </node>
+
+  <node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors" output="screen" />
+
+  <node pkg="tf" type="static_transform_publisher" name="lidar_tf_broadcaster" args="0 0 0 0 0 0 base_link neato_laser 100" />
+</launch>
