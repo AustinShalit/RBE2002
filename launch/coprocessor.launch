@@ -1,5 +1,5 @@
 <launch>
-  <node pkg="rviz" type="rviz" name="rviz" output="screen" />
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(env HOME)/RBE2002/config.rviz"/>
 
   <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">
     <param name="linearUpdate" value="0.5" type="double"/>
