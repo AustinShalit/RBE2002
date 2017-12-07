@@ -200,3 +200,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/c,ros,c++,macos,linux,windows,platformio,visualstudiocode
+
+devel/
+install/
+build/
