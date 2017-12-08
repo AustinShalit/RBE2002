@@ -9,17 +9,17 @@
   </node>
 
   <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">
-    <param name="linearUpdate" value="0.5" type="double"/>
-    <param name="angularUpdate" value="0.5"/>
+    <param name="linearUpdate" value="0.1" type="double"/>
+    <param name="angularUpdate" value="0.3"/>
     <param name="xmin" value="-5.0"/>
     <param name="ymin" value="-5.0"/>
     <param name="xmax" value="5.0"/>
     <param name="ymax" value="5.0"/>
-    <param name="delta" value="0.05"/>
-    <param name="maxRange" value="3.5"/>
-    <param name="maxUrange" value="3.0"/>
+    <param name="delta" value="0.035"/>
+    <param name="maxRange" value="3.0"/>
+    <param name="maxUrange" value="1.0"/>
     <param name="map_update_interval" value="0.25"/>
-    <param name="minimumScore" value="0"/>
+    <param name="minimumScore" value="50"/>
   </node>
 
   <!--
