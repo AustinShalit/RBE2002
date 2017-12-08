@@ -3,7 +3,9 @@
 #include <Wire.h>
 #include <IRTrackingCamera.h>
 #include <Encoder.h>
+#include <L3G.h>
 #include <ros.h>
+#include <sensor_msgs/Imu.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Int16.h>
@@ -21,6 +23,7 @@ const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
 // Motors
 MC33926MotorDriver md(9, 8, 6, 10, 7, 5);
 XV11 xv11(13);
+L3G gyro;
 
 // Sensors
 IRTrackingCamera flameCamera;
@@ -39,6 +42,9 @@ ros::Publisher encoderRightPublisher("rwheel", &encoderRightMessage);
 
 std_msgs::Float32 flameHAngleMessage;
 ros::Publisher flameHAnglePublisher("flameh_angle", &flameHAngleMessage);
+
+sensor_msgs::Imu imuMessage;
+ros::Publisher imuPublisher("imu/data", &imuMessage);
 
 // Subscribers
 void motorLeftCb(const std_msgs::Float32& message){
@@ -66,10 +72,24 @@ void fanEnableCb(const std_msgs::Bool& message){
 }
 ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
 
+void buildGyroData() {
+    gyro.read();
+
+    imuMessage.header.stamp = nh.now();
+    imuMessage.orientation_covariance[0] = -1;
+    imuMessage.linear_acceleration_covariance[0] = -1;
+    imuMessage.angular_velocity.x = gyro.g.x;
+    imuMessage.angular_velocity.y = gyro.g.y;
+    imuMessage.angular_velocity.z = gyro.g.z;
+}
+
+
 void setup() {
     // put your setup code here, to run once:
+    Wire.begin();
     md.Init();
     flameCamera.initialize();
+    gyro.enableDefault();
 
     nh.getHardware()->setBaud(115200);
     nh.initNode();
@@ -77,6 +97,8 @@ void setup() {
     nh.advertise(encoderLeftPublisher);
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
+    nh.advertise(imuPublisher);
+
     nh.subscribe(motorLeftSubscriber);
     nh.subscribe(motorRightSubscriber);
     nh.subscribe(lidarSpeedSubscriber);
@@ -97,9 +119,12 @@ void loop() {
         flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
     }
 
+    buildGyroData();
+
     encoderLeftPublisher.publish(&encoderLeftMessage);
     encoderRightPublisher.publish(&encoderRightMessage);
     flameHAnglePublisher.publish(&flameHAngleMessage);
+    imuPublisher.publish(&imuMessage);
 
     nh.spinOnce();
 

@@ -6,7 +6,7 @@
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "name": "PlatformIO Debugger",
-            "target": "/Users/austinshalit/Documents/PlatformIO/Projects/RBE2002/.pioenvs/megaatmega2560/firmware.elf",
+            "target": "/Users/austinshalit/git/RBE2002/platformio/.pioenvs/megaatmega2560/firmware.elf",
             "gdbpath": "/Users/austinshalit/.platformio/penv/bin/piodebuggdb",
             "autorun": [ "source .pioinit" ]
         }
