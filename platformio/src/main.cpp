@@ -4,6 +4,7 @@
 #include <IRTrackingCamera.h>
 #include <Encoder.h>
 #include <L3G.h>
+#include <LSM303.h>
 #include <ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Bool.h>
@@ -24,6 +25,7 @@ const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
 MC33926MotorDriver md(9, 8, 6, 10, 7, 5);
 XV11 xv11(13);
 L3G gyro;
+LSM303 compass;
 
 // Sensors
 IRTrackingCamera flameCamera;
@@ -78,10 +80,12 @@ void buildGyroData() {
     imuMessage.header.stamp = nh.now();
     imuMessage.header.frame_id = "/base_imu";
     imuMessage.orientation_covariance[0] = -1;
-    imuMessage.linear_acceleration_covariance[0] = -1;
     imuMessage.angular_velocity.x = gyro.g.x;
     imuMessage.angular_velocity.y = gyro.g.y;
     imuMessage.angular_velocity.z = gyro.g.z;
+    imuMessage.linear_acceleration.x = compass.a.x;
+    imuMessage.linear_acceleration.y = compass.a.y;
+    imuMessage.linear_acceleration.z = compass.a.z;
 }
 
 
@@ -91,7 +95,9 @@ void setup() {
     md.Init();
     flameCamera.initialize();
     gyro.init();
+    compass.init();
     gyro.enableDefault();
+    compass.enableDefault();
 
     nh.getHardware()->setBaud(115200);
     nh.initNode();
