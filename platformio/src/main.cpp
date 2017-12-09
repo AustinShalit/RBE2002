@@ -82,6 +82,8 @@ void fanEnableCb(const std_msgs::Bool& message){
 ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
 
 void zeroGyro() {
+    delay(2000); // Settling time
+
     for (int i = 0; i < kGyroZeroSamples; i++) {
         gyro.read();
         gyroErrorX += gyro.g.x;
