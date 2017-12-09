@@ -1,3 +1,0 @@
-<launch>  
-	<node pkg="process_imu_data" type="process_imu_data_node" name="process_imu_data" />
-</launch>     

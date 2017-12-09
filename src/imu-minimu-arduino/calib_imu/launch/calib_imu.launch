@@ -1,3 +1,0 @@
-<launch>  
-	<node pkg="calib_imu" type="calib_imu_node" name="calib_imu" />
-</launch>     
