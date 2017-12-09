@@ -7,6 +7,7 @@
 #include <LSM303.h>
 #include <ros.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Int16.h>
@@ -19,6 +20,9 @@
 // tan(fov / 2) / (width_pix / 2)
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
+
+// Global Variables
+long timer = 0;
 
 // Hardware
 // Motors
@@ -46,7 +50,10 @@ std_msgs::Float32 flameHAngleMessage;
 ros::Publisher flameHAnglePublisher("flameh_angle", &flameHAngleMessage);
 
 sensor_msgs::Imu imuMessage;
-ros::Publisher imuPublisher("imu/data", &imuMessage);
+ros::Publisher imuPublisher("imu/data_raw", &imuMessage);
+
+sensor_msgs::MagneticField magMessage;
+ros::Publisher magPublisher("imu/magnetic_field", &magMessage);
 
 // Subscribers
 void motorLeftCb(const std_msgs::Float32& message){
@@ -74,30 +81,49 @@ void fanEnableCb(const std_msgs::Bool& message){
 }
 ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
 
-void buildGyroData() {
+void buildGyroMagData() {
     gyro.read();
+    compass.readAcc();
+    compass.readMag();
 
     imuMessage.header.stamp = nh.now();
-    imuMessage.header.frame_id = "/base_imu";
-    imuMessage.orientation_covariance[0] = -1;
+    imuMessage.header.frame_id = "/base_imu_link";
+
     imuMessage.angular_velocity.x = gyro.g.x;
     imuMessage.angular_velocity.y = gyro.g.y;
     imuMessage.angular_velocity.z = gyro.g.z;
+
     imuMessage.linear_acceleration.x = compass.a.x;
     imuMessage.linear_acceleration.y = compass.a.y;
     imuMessage.linear_acceleration.z = compass.a.z;
+
+    magMessage.magnetic_field.x = compass.m.x;
+    magMessage.magnetic_field.y = compass.m.y;
+    magMessage.magnetic_field.z = compass.m.z;
 }
 
 
 void setup() {
-    // put your setup code here, to run once:
     Wire.begin();
+    delay(1500);
+
+    // Motor controller
     md.Init();
+
+    // Flame Camera
     flameCamera.initialize();
+
+    // Gyro
     gyro.init();
+    gyro.writeReg(L3G::CTRL4, 0x00); // 245 dps scale
+    gyro.writeReg(L3G::CTRL1, 0x0F); // normal power mode, all axes enabled, 100 Hz
+
+    // Magnetometer
     compass.init();
-    gyro.enableDefault();
     compass.enableDefault();
+    compass.writeReg(LSM303::CTRL2, 0x08); // 4 g scale: AFS = 001
+    compass.writeReg(LSM303::CTRL5, 0x10); // Magnetometer Low Resolution 50 Hz
+
 
     nh.getHardware()->setBaud(115200);
     nh.initNode();
@@ -106,6 +132,7 @@ void setup() {
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
     nh.advertise(imuPublisher);
+    nh.advertise(magPublisher);
 
     nh.subscribe(motorLeftSubscriber);
     nh.subscribe(motorRightSubscriber);
@@ -114,27 +141,29 @@ void setup() {
     nh.subscribe(fanEnableSubscriber);
     
     xv11.Update(0);
+    timer=millis();
 }
 
 void loop() {
-    encoderLeftMessage.data = leftEncoder.read();
-    encoderRightMessage.data = rightEncoder.read();
+    if (millis() - timer >= 20) {
+        encoderLeftMessage.data = leftEncoder.read();
+        encoderRightMessage.data = rightEncoder.read();
 
-    flameCamera.update();
-    if (flameCamera.Points[0].x == 1023) {
-        flameHAngleMessage.data = -1.0; // Magic number to signify no flame found
-    } else {
-        flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
+        flameCamera.update();
+        if (flameCamera.Points[0].x == 1023) {
+            flameHAngleMessage.data = -1.0; // Magic number to signify no flame found
+        } else {
+            flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
+        }
+
+        buildGyroMagData();
+
+        encoderLeftPublisher.publish(&encoderLeftMessage);
+        encoderRightPublisher.publish(&encoderRightMessage);
+        flameHAnglePublisher.publish(&flameHAngleMessage);
+        imuPublisher.publish(&imuMessage);
+        magPublisher.publish(&magMessage);
     }
 
-    buildGyroData();
-
-    encoderLeftPublisher.publish(&encoderLeftMessage);
-    encoderRightPublisher.publish(&encoderRightMessage);
-    flameHAnglePublisher.publish(&flameHAngleMessage);
-    imuPublisher.publish(&imuMessage);
-
     nh.spinOnce();
-
-    delay(10);
 }
