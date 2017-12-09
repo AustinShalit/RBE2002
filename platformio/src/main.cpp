@@ -107,8 +107,8 @@ void buildGyroData() {
     imuMessage.orientation_covariance[0] = -1;
 
     imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * PI / 180.0;
-    imuMessage.angular_velocity.y = (gyro.g.x - gyroErrorY) * PI / 180.0;
-    imuMessage.angular_velocity.z = (gyro.g.x - gyroErrorZ) * PI / 180.0;
+    imuMessage.angular_velocity.y = (gyro.g.y - gyroErrorY) * PI / 180.0;
+    imuMessage.angular_velocity.z = (gyro.g.z - gyroErrorZ) * PI / 180.0;
 
     imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256 * 9.8067;
     imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256 * 9.8067;
@@ -168,6 +168,7 @@ void setup() {
 
 void loop() {
     if (millis() - timer >= 20) {
+        timer = millis();
         encoderLeftMessage.data = leftEncoder.read();
         encoderRightMessage.data = rightEncoder.read();
 
