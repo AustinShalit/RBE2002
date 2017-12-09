@@ -31,7 +31,7 @@ float gyroErrorZ;
 // Hardware
 // Motors
 MC33926MotorDriver md(9, 8, 6, 10, 7, 5);
-XV11 xv11(13);
+XV11 xv11(12);
 L3G gyro;
 LSM303 compass;
 
