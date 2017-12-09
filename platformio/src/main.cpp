@@ -76,6 +76,7 @@ void buildGyroData() {
     gyro.read();
 
     imuMessage.header.stamp = nh.now();
+    imuMessage.header.frame_id = "/base_imu";
     imuMessage.orientation_covariance[0] = -1;
     imuMessage.linear_acceleration_covariance[0] = -1;
     imuMessage.angular_velocity.x = gyro.g.x;
@@ -89,6 +90,7 @@ void setup() {
     Wire.begin();
     md.Init();
     flameCamera.initialize();
+    gyro.init();
     gyro.enableDefault();
 
     nh.getHardware()->setBaud(115200);

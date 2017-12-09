@@ -17,5 +17,5 @@ private:
     PID m_pid;    
     double m_speed = 200.0;
     double m_motorOutput = 200.0;
-    double m_speedSetpoint = 275.0;
+    double m_speedSetpoint = 300.0;
 };

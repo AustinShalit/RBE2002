@@ -9,7 +9,7 @@
  * Create a new XV11.
  */
 XV11::XV11(uint8_t motorPin)
-    : m_motorPin(motorPin), m_pid(&m_speed, &m_motorOutput, &m_speedSetpoint, 0.0, 0.001, 0.0, DIRECT) {
+    : m_motorPin(motorPin), m_pid(&m_speed, &m_motorOutput, &m_speedSetpoint, 2.0, 0.5, 0.0, DIRECT) {
     m_pid.SetOutputLimits(190, 220);
     m_pid.SetMode(AUTOMATIC);
 }
