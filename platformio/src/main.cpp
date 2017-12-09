@@ -20,9 +20,13 @@
 // tan(fov / 2) / (width_pix / 2)
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
+const int kGyroZeroSamples = 300;
 
 // Global Variables
 long timer = 0;
+float gyroErrorX;
+float gyroErrorY;
+float gyroErrorZ;
 
 // Hardware
 // Motors
@@ -81,6 +85,20 @@ void fanEnableCb(const std_msgs::Bool& message){
 }
 ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
 
+void zeroGyro() {
+    for (int i = 0; i < kGyroZeroSamples; i++) {
+        gyro.read();
+        gyroErrorX += gyro.g.x;
+        gyroErrorY += gyro.g.y;
+        gyroErrorZ += gyro.g.z;
+        delay(20);
+    }
+
+    gyroErrorX /= kGyroZeroSamples;
+    gyroErrorY /= kGyroZeroSamples;
+    gyroErrorZ /= kGyroZeroSamples;
+}
+
 void buildGyroMagData() {
     gyro.read();
     compass.readAcc();
@@ -93,9 +111,9 @@ void buildGyroMagData() {
     magMessage.header.stamp = nh.now();
     magMessage.header.frame_id = "/base_imu_link";
 
-    imuMessage.angular_velocity.x = gyro.g.x * PI / 180.0;
-    imuMessage.angular_velocity.y = gyro.g.y * PI / 180.0;
-    imuMessage.angular_velocity.z = gyro.g.z * PI / 180.0;
+    imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * PI / 180.0;
+    imuMessage.angular_velocity.y = (gyro.g.x - gyroErrorY) * PI / 180.0;
+    imuMessage.angular_velocity.z = (gyro.g.x - gyroErrorZ) * PI / 180.0;
 
     imuMessage.linear_acceleration.x = compass.a.x;
     imuMessage.linear_acceleration.y = compass.a.y;
@@ -143,6 +161,9 @@ void setup() {
     nh.subscribe(lidarEnableSubscriber);
     nh.subscribe(fanEnableSubscriber);
     
+    nh.loginfo("Gyro zeroing started!");
+    zeroGyro();
+    nh.loginfo("Gyro zeroing complete!");
     xv11.Update(0);
     timer=millis();
 }
