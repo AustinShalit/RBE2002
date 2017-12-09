@@ -1,4 +1,0 @@
-[submodule "src/imu-minimu-arduino"]
-	path = src/imu-minimu-arduino
-	url = https://github.com/AR2A/imu-minimu-arduino.git
-	branch = master
