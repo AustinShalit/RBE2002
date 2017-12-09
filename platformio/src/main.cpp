@@ -7,7 +7,6 @@
 #include <LSM303.h>
 #include <ros.h>
 #include <sensor_msgs/Imu.h>
-#include <sensor_msgs/MagneticField.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Int16.h>
@@ -56,9 +55,6 @@ ros::Publisher flameHAnglePublisher("flameh_angle", &flameHAngleMessage);
 sensor_msgs::Imu imuMessage;
 ros::Publisher imuPublisher("imu/data_raw", &imuMessage);
 
-sensor_msgs::MagneticField magMessage;
-ros::Publisher magPublisher("imu/magnetic_field", &magMessage);
-
 // Subscribers
 void motorLeftCb(const std_msgs::Float32& message){
     md.SetM1Speed(message.data);
@@ -99,7 +95,7 @@ void zeroGyro() {
     gyroErrorZ /= kGyroZeroSamples;
 }
 
-void buildGyroMagData() {
+void buildGyroData() {
     gyro.read();
     compass.readAcc();
     compass.readMag();
@@ -108,20 +104,13 @@ void buildGyroMagData() {
     imuMessage.header.frame_id = "/base_imu_link";
     imuMessage.orientation_covariance[0] = -1;
 
-    magMessage.header.stamp = nh.now();
-    magMessage.header.frame_id = "/base_imu_link";
-
     imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * PI / 180.0;
     imuMessage.angular_velocity.y = (gyro.g.x - gyroErrorY) * PI / 180.0;
     imuMessage.angular_velocity.z = (gyro.g.x - gyroErrorZ) * PI / 180.0;
 
-    imuMessage.linear_acceleration.x = compass.a.x;
-    imuMessage.linear_acceleration.y = compass.a.y;
-    imuMessage.linear_acceleration.z = compass.a.z;
-
-    magMessage.magnetic_field.x = compass.m.x;
-    magMessage.magnetic_field.y = compass.m.y;
-    magMessage.magnetic_field.z = compass.m.z;
+    imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256 * 9.8067;
+    imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256 * 9.8067;
+    imuMessage.linear_acceleration.z = (compass.a.z >> 4) / 256 * 9.8067;
 }
 
 
@@ -142,8 +131,16 @@ void setup() {
     // Magnetometer
     compass.init();
     compass.enableDefault();
-    compass.writeReg(LSM303::CTRL2, 0x08); // 4 g scale: AFS = 001
-    compass.writeReg(LSM303::CTRL5, 0x10); // Magnetometer Low Resolution 50 Hz
+    switch (compass.getDeviceType()) {
+        case LSM303::device_D:
+            compass.writeReg(LSM303::CTRL2, 0x18); // 8 g full scale: AFS = 011
+            break;
+        case LSM303::device_DLHC:
+            compass.writeReg(LSM303::CTRL_REG4_A, 0x28); // 8 g full scale: FS = 10; high resolution output mode
+            break;
+        default: // DLM, DLH
+            compass.writeReg(LSM303::CTRL_REG4_A, 0x30); // 8 g full scale: FS = 11
+    }
 
 
     nh.getHardware()->setBaud(115200);
@@ -153,7 +150,6 @@ void setup() {
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
     nh.advertise(imuPublisher);
-    nh.advertise(magPublisher);
 
     nh.subscribe(motorLeftSubscriber);
     nh.subscribe(motorRightSubscriber);
@@ -180,13 +176,12 @@ void loop() {
             flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
         }
 
-        buildGyroMagData();
+        buildGyroData();
 
         encoderLeftPublisher.publish(&encoderLeftMessage);
         encoderRightPublisher.publish(&encoderRightMessage);
         flameHAnglePublisher.publish(&flameHAngleMessage);
         imuPublisher.publish(&imuMessage);
-        magPublisher.publish(&magMessage);
     }
 
     nh.spinOnce();
