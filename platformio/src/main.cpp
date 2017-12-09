@@ -19,7 +19,8 @@
 // tan(fov / 2) / (width_pix / 2)
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
-const int kGyroZeroSamples = 300;
+const int kGyroZeroSamples = 1000;
+const float kGyroDpsFactor = 0.0175; // Table 3: https://www.pololu.com/file/0J731/L3GD20H.pdf
 
 // Global Variables
 long timer = 0;
@@ -82,14 +83,14 @@ void fanEnableCb(const std_msgs::Bool& message){
 ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
 
 void zeroGyro() {
-    delay(2000); // Settling time
+    delay(500); // Settling time
 
     for (int i = 0; i < kGyroZeroSamples; i++) {
+        while(!gyro.readReg(L3G::STATUS_REG) & 0x08); // Wait for new data
         gyro.read();
         gyroErrorX += gyro.g.x;
         gyroErrorY += gyro.g.y;
         gyroErrorZ += gyro.g.z;
-        delay(20);
     }
 
     gyroErrorX /= kGyroZeroSamples;
@@ -106,9 +107,9 @@ void buildGyroData() {
     imuMessage.header.frame_id = "/base_imu_link";
     imuMessage.orientation_covariance[0] = -1;
 
-    imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * PI / 180.0;
-    imuMessage.angular_velocity.y = (gyro.g.y - gyroErrorY) * PI / 180.0;
-    imuMessage.angular_velocity.z = (gyro.g.z - gyroErrorZ) * PI / 180.0;
+    imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * kGyroDpsFactor * PI / 180.0;
+    imuMessage.angular_velocity.y = (gyro.g.y - gyroErrorY) * kGyroDpsFactor * PI / 180.0;
+    imuMessage.angular_velocity.z = (gyro.g.z - gyroErrorZ) * kGyroDpsFactor * PI / 180.0;
 
     imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256.0 * 9.8067;
     imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256.0 * 9.8067;
@@ -129,6 +130,8 @@ void setup() {
     // Gyro
     gyro.init();
     gyro.enableDefault();
+    gyro.writeReg(L3G::CTRL_REG4, 0x01); // 500 dps
+
 
     // Magnetometer
     compass.init();
@@ -167,7 +170,7 @@ void setup() {
 }
 
 void loop() {
-    if (millis() - timer >= 20) {
+    if (millis() - timer >= 10) {
         timer = millis();
         encoderLeftMessage.data = leftEncoder.read();
         encoderRightMessage.data = rightEncoder.read();
