@@ -5,7 +5,7 @@ project(calib_imu)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-  avr_imu roscpp std_msgs rospy genmsg message_filters tf2 tf2_ros rviz
+  roscpp std_msgs rospy genmsg message_filters tf2 tf2_ros rviz
 )
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
