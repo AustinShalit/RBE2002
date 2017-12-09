@@ -88,10 +88,14 @@ void buildGyroMagData() {
 
     imuMessage.header.stamp = nh.now();
     imuMessage.header.frame_id = "/base_imu_link";
+    imuMessage.orientation_covariance[0] = -1;
 
-    imuMessage.angular_velocity.x = gyro.g.x;
-    imuMessage.angular_velocity.y = gyro.g.y;
-    imuMessage.angular_velocity.z = gyro.g.z;
+    magMessage.header.stamp = nh.now();
+    magMessage.header.frame_id = "/base_imu_link";
+
+    imuMessage.angular_velocity.x = gyro.g.x * PI / 180.0;
+    imuMessage.angular_velocity.y = gyro.g.y * PI / 180.0;
+    imuMessage.angular_velocity.z = gyro.g.z * PI / 180.0;
 
     imuMessage.linear_acceleration.x = compass.a.x;
     imuMessage.linear_acceleration.y = compass.a.y;
@@ -115,8 +119,7 @@ void setup() {
 
     // Gyro
     gyro.init();
-    gyro.writeReg(L3G::CTRL4, 0x00); // 245 dps scale
-    gyro.writeReg(L3G::CTRL1, 0x0F); // normal power mode, all axes enabled, 100 Hz
+    gyro.enableDefault();
 
     // Magnetometer
     compass.init();
