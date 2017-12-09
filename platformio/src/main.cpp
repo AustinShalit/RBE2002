@@ -110,9 +110,9 @@ void buildGyroData() {
     imuMessage.angular_velocity.y = (gyro.g.y - gyroErrorY) * PI / 180.0;
     imuMessage.angular_velocity.z = (gyro.g.z - gyroErrorZ) * PI / 180.0;
 
-    imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256 * 9.8067;
-    imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256 * 9.8067;
-    imuMessage.linear_acceleration.z = (compass.a.z >> 4) / 256 * 9.8067;
+    imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256.0 * 9.8067;
+    imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256.0 * 9.8067;
+    imuMessage.linear_acceleration.z = (compass.a.z >> 4) / 256.0 * 9.8067;
 }
 
 
