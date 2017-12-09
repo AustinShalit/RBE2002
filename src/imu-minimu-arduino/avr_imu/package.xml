@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>avr_imu</name>
+  <version>0.0.1</version>
+  <description>
+  This is the rosserial node running on the arduino board. The node reads
+  the data from the imu over the spi interface and issues a message containing 
+  this data in a 50 Hz cycle.
+  </description>
+
+  <maintainer email="cto@lxrobotics.com">Alexander Entinger</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+	
+  <build_depend>message_generation</build_depend>
+  <build_depend>rosserial_arduino</build_depend>
+  
+  <run_depend>message_runtime</run_depend>
+  <run_depend>rosserial_arduino</run_depend>
+
+  <export>
+  </export>
+</package>

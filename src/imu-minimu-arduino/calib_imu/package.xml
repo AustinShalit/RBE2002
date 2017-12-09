@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package>
+  <name>calib_imu</name>
+  <version>0.0.1</version>
+  <description>
+  This node executes a step by step calibration process to compensate 
+  the alignement and scaling of the imu data (as well as hard and soft 
+  ironing effects on the magnetometer data). When the calibration finishes 
+  the calculated data is stored inside the ros execution path (typical ~/.ros).
+  </description>
+
+  <maintainer email="cto@lxrobotics.com">Alexander Entinger</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>avr_imu</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>message_filters</build_depend>
+  <build_depend>rviz</build_depend>
+  
+  <run_depend>avr_imu</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>tf2</run_depend>
+  <run_depend>tf2_ros</run_depend>
+  <run_depend>message_filters</run_depend>
+  <run_depend>rviz</run_depend>
+
+  <export>
+  <rviz plugin="${prefix}/plugin_description.xml"/>
+  </export>
+</package>
