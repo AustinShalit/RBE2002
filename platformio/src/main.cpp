@@ -147,7 +147,7 @@ void setup() {
     gyro.init();
     gyro.enableDefault();
     gyro.writeReg(L3G::CTRL_REG4, 0x01); // 500 dps
-
+    zeroGyro();
 
     // Magnetometer
     compass.init();
@@ -163,7 +163,6 @@ void setup() {
             compass.writeReg(LSM303::CTRL_REG4_A, 0x30); // 8 g full scale: FS = 11
     }
 
-
     nh.getHardware()->setBaud(115200);
     nh.initNode();
 
@@ -178,9 +177,6 @@ void setup() {
     nh.subscribe(lidarEnableSubscriber);
     nh.subscribe(fanEnableSubscriber);
     
-    nh.loginfo("Gyro zeroing started!");
-    zeroGyro();
-    nh.loginfo("Gyro zeroing complete!");
     xv11.Update(0);
     timer=millis();
 }
