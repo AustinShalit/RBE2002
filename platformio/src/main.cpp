@@ -165,6 +165,10 @@ void setup() {
     nh.getHardware()->setBaud(115200);
     nh.initNode();
 
+    while (!nh.connected()){
+        nh.spinOnce();
+    }
+
     nh.advertise(encoderLeftPublisher);
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
@@ -176,7 +180,7 @@ void setup() {
     nh.subscribe(lidarEnableSubscriber);
     nh.subscribe(fanEnableSubscriber);
     
-    ROS_INFO("Calibrating Sensors!");
+    nh.loginfo("Calibrating Sensors!");
     zeroGyro();
     xv11.Update(0);
     timer=millis();
