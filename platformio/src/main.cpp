@@ -19,6 +19,7 @@
 // tan(fov / 2) / (width_pix / 2)
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
+const double kFlameV = tan(0.384 / 2) / kHalfFlameCamera;
 const int kGyroZeroSamples = 1000;
 const float kGyroDpsFactor = 0.0175; // Table 3: https://www.pololu.com/file/0J731/L3GD20H.pdf
 
@@ -52,6 +53,9 @@ ros::Publisher encoderRightPublisher("rwheel", &encoderRightMessage);
 
 std_msgs::Float32 flameHAngleMessage;
 ros::Publisher flameHAnglePublisher("flameh_angle", &flameHAngleMessage);
+
+std_msgs::Float32 flameVAngleMessage;
+ros::Publisher flameVAnglePublisher("flamev_angle", &flameVAngleMessage);
 
 sensor_msgs::Imu imuMessage;
 ros::Publisher imuPublisher("imu/data_raw", &imuMessage);
@@ -104,7 +108,7 @@ void buildGyroData() {
     compass.readMag();
 
     imuMessage.header.stamp = nh.now();
-    imuMessage.header.frame_id = "/base_imu_link";
+    imuMessage.header.frame_id = "base_imu_link";
     imuMessage.orientation_covariance[0] = -1;
 
     imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * kGyroDpsFactor * PI / 180.0;
@@ -114,6 +118,18 @@ void buildGyroData() {
     imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256.0 * 9.8067;
     imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256.0 * 9.8067;
     imuMessage.linear_acceleration.z = (compass.a.z >> 4) / 256.0 * 9.8067;
+}
+
+void buildCameraData() {
+        flameCamera.update();
+
+        if (flameCamera.Points[0].x == 1023 && flameCamera.Points[0].y == 1023) {
+            flameHAngleMessage.data = -1.0; // Magic number to signify no flame found
+            flameVAngleMessage.data = -1.0; // Magic number to signify no flame found
+        } else {
+            flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
+            flameVAngleMessage.data = atan((flameCamera.Points[0].y - kHalfFlameCamera) * kFlameV);
+        }
 }
 
 
@@ -175,18 +191,13 @@ void loop() {
         encoderLeftMessage.data = leftEncoder.read();
         encoderRightMessage.data = rightEncoder.read();
 
-        flameCamera.update();
-        if (flameCamera.Points[0].x == 1023) {
-            flameHAngleMessage.data = -1.0; // Magic number to signify no flame found
-        } else {
-            flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
-        }
-
+        buildCameraData();
         buildGyroData();
 
         encoderLeftPublisher.publish(&encoderLeftMessage);
         encoderRightPublisher.publish(&encoderRightMessage);
         flameHAnglePublisher.publish(&flameHAngleMessage);
+        flameVAnglePublisher.publish(&flameVAngleMessage);
         imuPublisher.publish(&imuMessage);
     }
 

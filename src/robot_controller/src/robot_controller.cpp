@@ -13,6 +13,10 @@ uint8_t state = 0;
 
 MoveBaseClient* ac;
 
+void emptyCallback() {
+
+}
+
 void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
   if (msg->data != -1.0 && state != 3) {
     state = 3;
@@ -30,28 +34,14 @@ void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
   }
 }
 
-void stateCallback(const std_msgs::UInt8::ConstPtr& msg) {
-  state = msg->data; 
+void turnInPlaceDoneCallback(const actionlib::SimpleClientGoalState& state, const ResultConstPtr& result) {
+  state = 2;
 }
 
-int main(int argc, char** argv){
-  ros::init(argc, argv, "robot_controller");
-  ros::NodeHandle n;
+void stateCallback(const std_msgs::UInt8::ConstPtr& msg) {
+  state = msg->data;
 
-  ac = new MoveBaseClient("move_base", true);
-
-  while(!ac->waitForServer(ros::Duration(5.0))){
-    ROS_INFO("Waiting for the move_base action server to come up");
-  }
-
-  ros::Publisher state_pub = n.advertise<std_msgs::UInt8>("robot_state", 1000);
-  ros::Subscriber state_sub = n.subscribe("robot_state", 1000, stateCallback);
-  ros::Subscriber flameh_angle_sub = n.subscribe("flameh_angle", 1000, flameHAngleCallback);
-
-  ros::Rate loop_rate(10);
-
-  while(ros::ok()) {
-    switch (state) {
+  switch (state) {
       case 0: {
         // do nothing
         break;
@@ -62,7 +52,14 @@ int main(int argc, char** argv){
       }
       case 2: {
         // check for flame (turn in place)
-        //if ()
+        goal.target_pose.header.frame_id = "base_link";
+        goal.target_pose.header.stamp = ros::Time::now();
+        for (int i = 1; i <= 3; i++) {
+          goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(i * 0.785);
+          ac->sendGoal(goal);
+        }
+        goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(4 * 0.785);
+        ac->sendGoal(goal, &doneCb, &emptyCallback, &emptyCallback);
         break;
       }
       case 3: {
@@ -94,6 +91,31 @@ int main(int argc, char** argv){
         }
         break;
       }
+    }
+}
+
+int main(int argc, char** argv){
+  ros::init(argc, argv, "robot_controller");
+  ros::NodeHandle n;
+
+  ac = new MoveBaseClient("move_base", true);
+
+  while(!ac->waitForServer(ros::Duration(5.0))){
+    ROS_INFO("Waiting for the move_base action server to come up");
+  }
+
+  ros::Publisher state_pub = n.advertise<std_msgs::UInt8>("robot_state", 1000);
+  ros::Subscriber state_sub = n.subscribe("robot_state", 1000, stateCallback);
+  ros::Subscriber flameh_angle_sub = n.subscribe("flameh_angle", 1000, flameHAngleCallback);
+
+  ros::Rate loop_rate(10);
+
+  std_msgs::UInt8 stateMessage;
+
+  while(ros::ok()) {
+
+    if (stateMessage.data != state) {
+      state_pub.publish(stateMessage);
     }
 
     ros::spinOnce();
