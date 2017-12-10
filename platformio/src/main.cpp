@@ -7,7 +7,6 @@
 #include <LSM303.h>
 #include <ros.h>
 #include <sensor_msgs/Imu.h>
-#include <sensor_msgs/MagneticField.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Int16.h>
@@ -20,14 +19,19 @@
 // tan(fov / 2) / (width_pix / 2)
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
+const int kGyroZeroSamples = 1000;
+const float kGyroDpsFactor = 0.0175; // Table 3: https://www.pololu.com/file/0J731/L3GD20H.pdf
 
 // Global Variables
 long timer = 0;
+float gyroErrorX;
+float gyroErrorY;
+float gyroErrorZ;
 
 // Hardware
 // Motors
 MC33926MotorDriver md(9, 8, 6, 10, 7, 5);
-XV11 xv11(13);
+XV11 xv11(12);
 L3G gyro;
 LSM303 compass;
 
@@ -51,9 +55,6 @@ ros::Publisher flameHAnglePublisher("flameh_angle", &flameHAngleMessage);
 
 sensor_msgs::Imu imuMessage;
 ros::Publisher imuPublisher("imu/data_raw", &imuMessage);
-
-sensor_msgs::MagneticField magMessage;
-ros::Publisher magPublisher("imu/magnetic_field", &magMessage);
 
 // Subscribers
 void motorLeftCb(const std_msgs::Float32& message){
@@ -81,25 +82,38 @@ void fanEnableCb(const std_msgs::Bool& message){
 }
 ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
 
-void buildGyroMagData() {
+void zeroGyro() {
+    delay(500); // Settling time
+
+    for (int i = 0; i < kGyroZeroSamples; i++) {
+        while(!gyro.readReg(L3G::STATUS_REG) & 0x08); // Wait for new data
+        gyro.read();
+        gyroErrorX += gyro.g.x;
+        gyroErrorY += gyro.g.y;
+        gyroErrorZ += gyro.g.z;
+    }
+
+    gyroErrorX /= kGyroZeroSamples;
+    gyroErrorY /= kGyroZeroSamples;
+    gyroErrorZ /= kGyroZeroSamples;
+}
+
+void buildGyroData() {
     gyro.read();
     compass.readAcc();
     compass.readMag();
 
     imuMessage.header.stamp = nh.now();
     imuMessage.header.frame_id = "/base_imu_link";
+    imuMessage.orientation_covariance[0] = -1;
 
-    imuMessage.angular_velocity.x = gyro.g.x;
-    imuMessage.angular_velocity.y = gyro.g.y;
-    imuMessage.angular_velocity.z = gyro.g.z;
+    imuMessage.angular_velocity.x = (gyro.g.x - gyroErrorX) * kGyroDpsFactor * PI / 180.0;
+    imuMessage.angular_velocity.y = (gyro.g.y - gyroErrorY) * kGyroDpsFactor * PI / 180.0;
+    imuMessage.angular_velocity.z = (gyro.g.z - gyroErrorZ) * kGyroDpsFactor * PI / 180.0;
 
-    imuMessage.linear_acceleration.x = compass.a.x;
-    imuMessage.linear_acceleration.y = compass.a.y;
-    imuMessage.linear_acceleration.z = compass.a.z;
-
-    magMessage.magnetic_field.x = compass.m.x;
-    magMessage.magnetic_field.y = compass.m.y;
-    magMessage.magnetic_field.z = compass.m.z;
+    imuMessage.linear_acceleration.x = (compass.a.x >> 4) / 256.0 * 9.8067;
+    imuMessage.linear_acceleration.y = (compass.a.y >> 4) / 256.0 * 9.8067;
+    imuMessage.linear_acceleration.z = (compass.a.z >> 4) / 256.0 * 9.8067;
 }
 
 
@@ -115,14 +129,23 @@ void setup() {
 
     // Gyro
     gyro.init();
-    gyro.writeReg(L3G::CTRL4, 0x00); // 245 dps scale
-    gyro.writeReg(L3G::CTRL1, 0x0F); // normal power mode, all axes enabled, 100 Hz
+    gyro.enableDefault();
+    gyro.writeReg(L3G::CTRL_REG4, 0x01); // 500 dps
+
 
     // Magnetometer
     compass.init();
     compass.enableDefault();
-    compass.writeReg(LSM303::CTRL2, 0x08); // 4 g scale: AFS = 001
-    compass.writeReg(LSM303::CTRL5, 0x10); // Magnetometer Low Resolution 50 Hz
+    switch (compass.getDeviceType()) {
+        case LSM303::device_D:
+            compass.writeReg(LSM303::CTRL2, 0x18); // 8 g full scale: AFS = 011
+            break;
+        case LSM303::device_DLHC:
+            compass.writeReg(LSM303::CTRL_REG4_A, 0x28); // 8 g full scale: FS = 10; high resolution output mode
+            break;
+        default: // DLM, DLH
+            compass.writeReg(LSM303::CTRL_REG4_A, 0x30); // 8 g full scale: FS = 11
+    }
 
 
     nh.getHardware()->setBaud(115200);
@@ -132,7 +155,6 @@ void setup() {
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
     nh.advertise(imuPublisher);
-    nh.advertise(magPublisher);
 
     nh.subscribe(motorLeftSubscriber);
     nh.subscribe(motorRightSubscriber);
@@ -140,12 +162,16 @@ void setup() {
     nh.subscribe(lidarEnableSubscriber);
     nh.subscribe(fanEnableSubscriber);
     
+    nh.loginfo("Gyro zeroing started!");
+    zeroGyro();
+    nh.loginfo("Gyro zeroing complete!");
     xv11.Update(0);
     timer=millis();
 }
 
 void loop() {
-    if (millis() - timer >= 20) {
+    if (millis() - timer >= 10) {
+        timer = millis();
         encoderLeftMessage.data = leftEncoder.read();
         encoderRightMessage.data = rightEncoder.read();
 
@@ -156,13 +182,12 @@ void loop() {
             flameHAngleMessage.data = atan((flameCamera.Points[0].x - kHalfFlameCamera) * kFlameH);
         }
 
-        buildGyroMagData();
+        buildGyroData();
 
         encoderLeftPublisher.publish(&encoderLeftMessage);
         encoderRightPublisher.publish(&encoderRightMessage);
         flameHAnglePublisher.publish(&flameHAngleMessage);
         imuPublisher.publish(&imuMessage);
-        magPublisher.publish(&magMessage);
     }
 
     nh.spinOnce();

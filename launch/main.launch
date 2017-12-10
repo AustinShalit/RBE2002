@@ -54,5 +54,5 @@
   <node pkg="differential_drive" type="twist_to_motors.py" name="twist_to_motors" output="screen" />
 
   <node pkg="tf" type="static_transform_publisher" name="lidar_tf_broadcaster" args="0 0 0 0 0 0 base_link neato_laser 100" />
-  <node pkg="tf" type="static_transform_publisher" name="imu_tf_broadcaster" args="0.038 0 0 0 0 0 base_link base_imu 100" />
+  <node pkg="tf" type="static_transform_publisher" name="imu_tf_broadcaster" args="0.038 0 0 1.5708 0 0 base_link base_imu_link 100" />
 </launch>
