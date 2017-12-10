@@ -19,7 +19,7 @@
 
   <node pkg="differential_drive" type="diff_tf.py" name="diff_tf" output="screen">
     <rosparam param="base_width">0.21</rosparam>
-    <rosparam param="odom_frame_id" value="odom0"/>
+    <rosparam param="odom_frame_id">odom0</rosparam>
     <remap from="odom" to="robot_publisher/odom0"/>
   </node>
 
@@ -28,9 +28,9 @@
     <remap from="motor_cmd" to="lmotor_cmd"/>
     <remap from="wheel_vtarget" to="lwheel_vtarget"/>
     <remap from="wheel_vel" to="lwheel_vel"/>
-    <rosparam param="Kp">0.0</rosparam>
-    <rosparam param="Ki">200.0</rosparam>
-    <rosparam param="Kd">0.0</rosparam>
+    <rosparam param="Kp">100.0</rosparam>
+    <rosparam param="Ki">800.0</rosparam>
+    <rosparam param="Kd">10.0</rosparam>
     <rosparam param="out_min">-255</rosparam>
     <rosparam param="out_max">255</rosparam>
     <rosparam param="rate">30</rosparam>
@@ -43,9 +43,9 @@
     <remap from="motor_cmd" to="rmotor_cmd"/>
     <remap from="wheel_vtarget" to="rwheel_vtarget"/>
     <remap from="wheel_vel" to="rwheel_vel"/>
-    <rosparam param="Kp">0.0</rosparam>
-    <rosparam param="Ki">200.0</rosparam>
-    <rosparam param="Kd">0.0</rosparam>
+    <rosparam param="Kp">100.0</rosparam>
+    <rosparam param="Ki">800.0</rosparam>
+    <rosparam param="Kd">10.0</rosparam>
     <rosparam param="out_min">-255</rosparam>
     <rosparam param="out_max">255</rosparam>
     <rosparam param="rate">30</rosparam>

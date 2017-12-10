@@ -165,13 +165,10 @@ void setup() {
     nh.getHardware()->setBaud(115200);
     nh.initNode();
 
-    while (!nh.connected()){
-        nh.spinOnce();
-    }
-
     nh.advertise(encoderLeftPublisher);
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
+    nh.advertise(flameVAnglePublisher);
     nh.advertise(imuPublisher);
 
     nh.subscribe(motorLeftSubscriber);
