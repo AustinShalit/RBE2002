@@ -147,7 +147,6 @@ void setup() {
     gyro.init();
     gyro.enableDefault();
     gyro.writeReg(L3G::CTRL_REG4, 0x01); // 500 dps
-    zeroGyro();
 
     // Magnetometer
     compass.init();
@@ -177,6 +176,8 @@ void setup() {
     nh.subscribe(lidarEnableSubscriber);
     nh.subscribe(fanEnableSubscriber);
     
+    ROS_INFO("Calibrating Sensors!");
+    zeroGyro();
     xv11.Update(0);
     timer=millis();
 }
