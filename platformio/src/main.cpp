@@ -20,7 +20,7 @@
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
 const double kFlameV = tan(0.384 / 2) / kHalfFlameCamera;
-const int kGyroZeroSamples = 1000;
+const int kGyroZeroSamples = 200;
 const float kGyroDpsFactor = 0.0175; // Table 3: https://www.pololu.com/file/0J731/L3GD20H.pdf
 
 // Global Variables
