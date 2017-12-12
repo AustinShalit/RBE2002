@@ -65,6 +65,7 @@ int main(int argc, char** argv){
 
   ros::Subscriber enable_sub = n.subscribe("robot_enable", 1000, &enableCallback);
   ros::Subscriber flameh_angle_sub = n.subscribe("flameh_angle", 1000, &flameHAngleCallback);
+  ros::Subscriber flamev_angle_sub = n.subscribe("flamev_angle", 1000, &flameVAngleCallback);
   ros::Subscriber laser_sub = n.subscribe("scan", 1000, &scanCallback);
   ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 1000);
   ros::Publisher flame_pub = n.advertise<geometry_msgs::PointStamped>("flame", 1000);
