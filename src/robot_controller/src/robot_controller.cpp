@@ -17,9 +17,9 @@ MoveBaseClient* ac;
 bool robotEnabled = false;
 bool stateChanged = true;
 uint8_t state = 0;
-double flameH = 0.0;
-double flameV = 0.0;
-double distFwd = 0.0;
+float flameHAngle = 0.0;
+float flameVAngle = 0.0;
+float distFwd = 0.0;
 
 
 void enableCallback(const std_msgs::Bool::ConstPtr& msg) {
@@ -38,13 +38,13 @@ void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
       state = 3;
       stateChanged = true;
     }
-    flameH = msg->data;
+    flameHAngle = msg->data;
   }
 }
 
 void flameVAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
   if (msg->data != -1.0) {
-    flameV = msg->data;
+    flameVAngle = msg->data;
   }
 }
 
@@ -67,6 +67,7 @@ int main(int argc, char** argv){
   ros::Subscriber laser_sub = n.subscribe("scan", 1000, &scanCallback);
   ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 1000);
   ros::Publisher flame_pub = n.advertise<geometry_msgs::PointStamped>("flame", 1000);
+  ros::Publisher fanAngle_pub = n.advertise<std_msgs::Float32>("fan_angle", 1000);
 
   ros::Rate loop_rate(10);
   double timer = 0.0;
@@ -97,12 +98,13 @@ int main(int argc, char** argv){
           break;
         }
         case 3: {
+          // Turn to face candle
           move_base_msgs::MoveBaseGoal goal;
 
           goal.target_pose.header.frame_id = "base_link";
           goal.target_pose.header.stamp = ros::Time::now();
 
-          goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameH);
+          goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameHAngle);
 
           ac->sendGoal(goal);
           ac->waitForResult();
@@ -110,14 +112,52 @@ int main(int argc, char** argv){
           break;
         }
         case 4: {
+          // Calculate candle position
           geometry_msgs::PointStamped flameLoc;
           flameLoc.header.frame_id = "neato_laser";
           flameLoc.header.stamp = ros::Time::now();
           flameLoc.point.x = distFwd;
-          flameLoc.point.z = 0.21 + (distFwd * tan(flameV));
+          flameLoc.point.z = 0.21 + (distFwd * tan(flameVAngle));
           flame_pub.publish(flameLoc);
           state = 0;
           break;
+        }
+        case 5: {
+          // Blow out candle
+          // Enable the blower
+          // Exit: Wait for candle to be out and then start timer for some seconds
+          // Proceed to next state & turn off blower
+          if (stateChanged) {
+            std_msgs::Float32 angle;
+            angle.data = flameVAngle;
+            fanAngle_pub.publish(angle);
+            timer = 0.0;
+          }
+
+          if (flameVAngle == -1) {
+            timer = ros::Time::now().sec;
+          }
+
+          if (timer != 0.0 && ros::Time::now().sec - timer > 1.5) {
+            std_msgs::Float32 angle;
+            angle.data = flameVAngle;
+            fanAngle_pub.publish(angle);
+            state = 6;
+          }
+          break;
+        }
+        case 6: {
+          // Return home
+          // Send move goal as 0, 0, 0 with a fixed frame of map
+          // Exit: Move goal success
+          // Proceed: case 0
+          move_base_msgs::MoveBaseGoal goal;
+
+          goal.target_pose.header.frame_id = "map";
+          goal.target_pose.header.stamp = ros::Time::now();
+
+          ac->sendGoal(goal);
+          ac->waitForResult();
         }
       }
     }

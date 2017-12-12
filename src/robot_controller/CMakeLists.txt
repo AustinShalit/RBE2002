@@ -12,7 +12,16 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   std_msgs
-  explore_lite
+  
+  move_base_msgs
+  visualization_msgs
+  geometry_msgs
+  map_msgs
+  nav_msgs
+  actionlib_msgs
+  tf
+  costmap_2d
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
