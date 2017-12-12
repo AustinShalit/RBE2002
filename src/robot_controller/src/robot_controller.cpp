@@ -143,7 +143,7 @@ int main(int argc, char** argv){
             timer = ros::Time::now().sec;
             ROS_WARN("----------------UPDATE TIMER --------------");
           }
-          ROS_WARN("%i\t%i\t%i", ros::Time::now().sec, timer, ros::Time::now().sec - timer);
+          ROS_WARN("%f\t%i\t%i\t%i", flameVAngle, ros::Time::now().sec, timer, ros::Time::now().sec - timer);
           if (timer != 0 && ros::Time::now().sec - timer > 4) {
             std_msgs::Float32 angle;
             angle.data = -1.0;
