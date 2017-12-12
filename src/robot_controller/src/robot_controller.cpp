@@ -36,7 +36,7 @@ void enableCallback(const std_msgs::Bool::ConstPtr& msg) {
 
 void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
   if (msg->data != -1.0) {
-    if (state != 3) {
+    if (state >= 1 && state < 3) {
       state = 3;
       stateChanged = true;
     }
@@ -137,17 +137,19 @@ int main(int argc, char** argv){
             angle.data = flameVAngle;
             fanAngle_pub.publish(angle);
             timer = 0.0;
+	    stateChanged = false;
           }
 
-          if (flameVAngle == -1.0) {
+          if (timer == 0.0 && flameVAngle == -1.0) {
             timer = ros::Time::now().sec;
           }
-
+	  ROS_WARN("%f",ros::Time::now().sec - timer);
           if (timer != 0.0 && ros::Time::now().sec - timer > 4.0) {
             std_msgs::Float32 angle;
 	    angle.data = -1.0;
             fanAngle_pub.publish(angle);
             state = 6;
+	    stateChanged = true;
           }
           break;
         }
