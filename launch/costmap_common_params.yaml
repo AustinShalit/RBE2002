@@ -2,7 +2,7 @@ obstacle_range: 3.0
 raytrace_range: 3.0
 
 robot_radius: 0.1
-inflation_radius: 0.125
+inflation_radius: 0.063
 
 footprint_clearing_enabled: true
 
