@@ -74,13 +74,13 @@ int main(int argc, char** argv){
   ros::Rate loop_rate(10);
   double timer = 0.0;
 
-  explore::Explore explore;
+  //explore::Explore explore;
 
   while(ros::ok()) {
     if (robotEnabled) {
       switch (state) {
         case 1: {
-          explore.makePlan();
+          //explore.makePlan();
           break;
         }
         case 2: {
@@ -90,11 +90,11 @@ int main(int argc, char** argv){
             ac->cancelAllGoals();
           }
           geometry_msgs::Twist twist;
-          twist.angular.z = 0.4;
+          twist.angular.z = 0.5;
           twist_pub.publish(twist);
 
           // Lol... who would use time?
-          if ((ros::Time::now().sec - timer) * 0.4 > 7) {
+          if ((ros::Time::now().sec - timer) * 0.5 > 7) {
             twist.angular.z = 0.0;
             twist_pub.publish(twist);
             state = 1;
@@ -143,7 +143,7 @@ int main(int argc, char** argv){
             timer = ros::Time::now().sec;
           }
 
-          if (timer != 0.0 && ros::Time::now().sec - timer > 1.5) {
+          if (timer != 0.0 && ros::Time::now().sec - timer > 4.0) {
             std_msgs::Float32 angle;
             angle.data = flameVAngle;
             fanAngle_pub.publish(angle);
