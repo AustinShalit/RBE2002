@@ -11,6 +11,7 @@ debug_out_file: /path/to/debug/file.txt
 odom_frame: odom
 base_link_frame: base_link
 world_frame: odom
+publish_tf: true
 
 odom0: robot_publisher/odom0
 odom0_config: [false,  false,  false,

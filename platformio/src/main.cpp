@@ -7,6 +7,7 @@
 #include <LSM303.h>
 #include <ros.h>
 #include <sensor_msgs/Imu.h>
+#include <Servo.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Int16.h>
@@ -20,8 +21,11 @@
 const int kHalfFlameCamera = 1023 / 2;
 const double kFlameH = tan(0.576 / 2) / kHalfFlameCamera;
 const double kFlameV = tan(0.384 / 2) / kHalfFlameCamera;
-const int kGyroZeroSamples = 1000;
+
+const int kGyroZeroSamples = 200;
 const float kGyroDpsFactor = 0.0175; // Table 3: https://www.pololu.com/file/0J731/L3GD20H.pdf
+
+const int kFanAngleServoPin = 14;
 
 // Global Variables
 long timer = 0;
@@ -33,13 +37,14 @@ float gyroErrorZ;
 // Motors
 MC33926MotorDriver md(9, 8, 6, 10, 7, 5);
 XV11 xv11(12);
-L3G gyro;
-LSM303 compass;
+Servo fanAngleServo;
 
 // Sensors
 IRTrackingCamera flameCamera;
 Encoder leftEncoder(18, 19);
 Encoder rightEncoder(2, 3);
+L3G gyro;
+LSM303 compass;
 
 // ROS
 ros::NodeHandle nh;
@@ -81,10 +86,16 @@ void lidarEnableCb(const std_msgs::Bool& message){
 }
 ros::Subscriber<std_msgs::Bool> lidarEnableSubscriber("lidar_enable", &lidarEnableCb);
 
-void fanEnableCb(const std_msgs::Bool& message){
-    // Enable the fan
+void fanAngleCb(const std_msgs::Float32& message){
+    if (message.data == -1.0) {
+        // Go home
+        // Disable the fan
+    } else {
+        // Enable the fan
+        // Go to angle (if angle is valid)
+    }
 }
-ros::Subscriber<std_msgs::Bool> fanEnableSubscriber("fan_enable", &fanEnableCb);
+ros::Subscriber<std_msgs::Float32> fanAngleSubscriber("fan_angle", &fanAngleCb);
 
 void zeroGyro() {
     delay(500); // Settling time
@@ -140,6 +151,10 @@ void setup() {
     // Motor controller
     md.Init();
 
+    // Fan angle servo
+    fanAngleServo.attach(kFanAngleServoPin);
+    fanAngleServo.writeMicroseconds(1500);
+
     // Flame Camera
     flameCamera.initialize();
 
@@ -147,7 +162,6 @@ void setup() {
     gyro.init();
     gyro.enableDefault();
     gyro.writeReg(L3G::CTRL_REG4, 0x01); // 500 dps
-    zeroGyro();
 
     // Magnetometer
     compass.init();
@@ -169,14 +183,17 @@ void setup() {
     nh.advertise(encoderLeftPublisher);
     nh.advertise(encoderRightPublisher);
     nh.advertise(flameHAnglePublisher);
+    nh.advertise(flameVAnglePublisher);
     nh.advertise(imuPublisher);
 
     nh.subscribe(motorLeftSubscriber);
     nh.subscribe(motorRightSubscriber);
     nh.subscribe(lidarSpeedSubscriber);
     nh.subscribe(lidarEnableSubscriber);
-    nh.subscribe(fanEnableSubscriber);
+    nh.subscribe(fanAngleSubscriber);
     
+    nh.loginfo("Calibrating Sensors!");
+    zeroGyro();
     xv11.Update(0);
     timer=millis();
 }

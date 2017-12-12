@@ -3,10 +3,11 @@
 
   <node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_filter" output="screen"/>
 
+  <!-->
   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true" output="screen">
     <rosparam command="load" file="$(env HOME)/RBE2002/launch/ekf_template.yaml"/>
     <remap from="/odometry/filtered" to="/odom"/>
-  </node>
+  </node>-->
 
   <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">
     <param name="odom_frame" value="odom"/>

@@ -66,12 +66,9 @@ public:
 
   void start();
   void stop();
+  void makePlan();
 
 private:
-  /**
-   * @brief  Make a global plan
-   */
-  void makePlan();
 
   /**
    * @brief  Publish a frontiers as markers
