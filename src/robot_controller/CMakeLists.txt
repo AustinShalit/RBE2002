@@ -114,20 +114,28 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES robot_controller
-  CATKIN_DEPENDS roscpp std_msgs explore_lite
+  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )
 
 ###########
 ## Build ##
 ###########
+# c++11 support requireda
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+if(COMPILER_SUPPORTS_CXX11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+else()
+  message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  #include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -144,7 +152,12 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME} src/robot_controller.cpp)
+add_executable(${PROJECT_NAME}
+  src/robot_controller.cpp
+  src/frontier_search.cpp
+  src/costmap_client.cpp
+  src/explore.cpp
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

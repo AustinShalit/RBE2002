@@ -242,6 +242,8 @@ void Explore::makePlan()
                 const move_base_msgs::MoveBaseResultConstPtr& result) {
         reachedGoal(status, result, target_position);
       });
+
+  move_base_client_.waitForResult();
 }
 
 bool Explore::goalOnBlacklist(const geometry_msgs::Point& goal)
@@ -275,9 +277,9 @@ void Explore::reachedGoal(const actionlib::SimpleClientGoalState& status,
   // execute via timer to prevent dead lock in move_base_client (this is
   // callback for sendGoal, which is called in makePlan). the timer must live
   // until callback is executed.
-  oneshot_ = relative_nh_.createTimer(
-      ros::Duration(0, 0), [this](const ros::TimerEvent&) { makePlan(); },
-      true);
+  // oneshot_ = relative_nh_.createTimer(
+  //     ros::Duration(0, 0), [this](const ros::TimerEvent&) { makePlan(); },
+  //     true);
 }
 
 void Explore::start()
@@ -294,15 +296,15 @@ void Explore::stop()
 
 }  // namespace explore
 
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "explore");
-  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
-                                     ros::console::levels::Debug)) {
-    ros::console::notifyLoggerLevelsChanged();
-  }
-  explore::Explore explore;
-  ros::spin();
+// int main(int argc, char** argv)
+// {
+//   ros::init(argc, argv, "explore");
+//   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
+//                                      ros::console::levels::Debug)) {
+//     ros::console::notifyLoggerLevelsChanged();
+//   }
+//   explore::Explore explore;
+//   ros::spin();
 
-  return 0;
-}
+//   return 0;
+// }

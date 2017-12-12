@@ -11,6 +11,8 @@
 #include <move_base_msgs/MoveBaseAction.h>
 #include <actionlib/client/simple_action_client.h>
 
+#include "explore/explore.h"
+
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 MoveBaseClient* ac;
@@ -72,10 +74,13 @@ int main(int argc, char** argv){
   ros::Rate loop_rate(10);
   double timer = 0.0;
 
+  explore::Explore explore;
+
   while(ros::ok()) {
     if (robotEnabled) {
       switch (state) {
         case 1: {
+          explore.makePlan();
           break;
         }
         case 2: {
