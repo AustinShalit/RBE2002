@@ -4,7 +4,10 @@
     <rosparam file="$(env HOME)/RBE2002/launch/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(env HOME)/RBE2002/launch/local_costmap_params.yaml" command="load" />
     <rosparam file="$(env HOME)/RBE2002/launch/global_costmap_params.yaml" command="load" />
-    <rosparam file="$(env HOME)/RBE2002/launch/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/dwa_local_planner_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/move_base_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/global_planner_params.yaml" command="load" />
+    <rosparam file="$(env HOME)/RBE2002/launch/navfn_global_planner_params.yaml" command="load" />
   </node>
 </launch>
 

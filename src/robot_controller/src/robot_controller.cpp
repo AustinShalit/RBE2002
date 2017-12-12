@@ -26,7 +26,7 @@ float distFwd = 0.0;
 
 void enableCallback(const std_msgs::Bool::ConstPtr& msg) {
   if (msg->data == true) {
-    state = 2;
+    state = 1;
     stateChanged = true;
   } else {
     ac->cancelAllGoals();
@@ -74,13 +74,17 @@ int main(int argc, char** argv){
   ros::Rate loop_rate(10);
   uint32_t timer = 0;
 
-  //explore::Explore explore;
+  explore::Explore explore;
 
   while(ros::ok()) {
     if (robotEnabled) {
       switch (state) {
+        case 0: {
+          // Nothing
+        }
         case 1: {
-          //explore.makePlan();
+          ROS_INFO("Making explore plan");
+          explore.makePlan();
           break;
         }
         case 2: {
@@ -142,9 +146,8 @@ int main(int argc, char** argv){
 
           if (timer == 0 && flameVAngle == -1.0) {
             timer = ros::Time::now().sec;
-            ROS_WARN("----------------UPDATE TIMER --------------");
           }
-          ROS_WARN("%f\t%i\t%i\t%i", flameVAngle, ros::Time::now().sec, timer, ros::Time::now().sec - timer);
+
           if (timer != 0 && ros::Time::now().sec - timer > 4) {
             std_msgs::Float32 angle;
             angle.data = -1.0;
@@ -166,6 +169,7 @@ int main(int argc, char** argv){
 
           ac->sendGoal(goal);
           ac->waitForResult();
+          break;
         }
       }
     }
