@@ -71,7 +71,7 @@ int main(int argc, char** argv){
   ros::Publisher fanAngle_pub = n.advertise<std_msgs::Float32>("fan_angle", 1000);
 
   ros::Rate loop_rate(10);
-  double timer = 0.0;
+  uint32_t timer = 0;
 
   //explore::Explore explore;
 
@@ -135,16 +135,16 @@ int main(int argc, char** argv){
             std_msgs::Float32 angle;
             angle.data = flameVAngle;
             fanAngle_pub.publish(angle);
-            timer = 0.0;
+            timer = 0;
             stateChanged = false;
           }
 
-          if (timer == 0.0 && flameVAngle == -1.0) {
+          if (timer == 0 && flameVAngle == -1.0) {
             timer = ros::Time::now().sec;
             ROS_WARN("----------------UPDATE TIMER --------------");
           }
-          ROS_WARN("%f\t%f\t%f", ros::Time::now().sec, timer, ros::Time::now().sec - timer);
-          if (timer != 0.0 && ros::Time::now().sec - timer > 4.0) {
+          ROS_WARN("%i\t%i\t%i", ros::Time::now().sec, timer, ros::Time::now().sec - timer);
+          if (timer != 0 && ros::Time::now().sec - timer > 4) {
             std_msgs::Float32 angle;
             angle.data = -1.0;
             fanAngle_pub.publish(angle);
