@@ -124,7 +124,7 @@ int main(int argc, char** argv){
           flameLoc.point.x = distFwd;
           flameLoc.point.z = 0.21 + (distFwd * tan(flameVAngle));
           flame_pub.publish(flameLoc);
-          state = 0;
+          state = 5;
           break;
         }
         case 5: {
@@ -139,13 +139,13 @@ int main(int argc, char** argv){
             timer = 0.0;
           }
 
-          if (flameVAngle == -1) {
+          if (flameVAngle == -1.0) {
             timer = ros::Time::now().sec;
           }
 
           if (timer != 0.0 && ros::Time::now().sec - timer > 4.0) {
             std_msgs::Float32 angle;
-            angle.data = flameVAngle;
+	    angle.data = -1.0;
             fanAngle_pub.publish(angle);
             state = 6;
           }
