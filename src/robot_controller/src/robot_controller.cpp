@@ -40,14 +40,13 @@ void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
       state = 3;
       stateChanged = true;
     }
-    flameHAngle = msg->data;
   }
+
+  flameHAngle = msg->data;
 }
 
 void flameVAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
-  if (msg->data != -1.0) {
-    flameVAngle = msg->data;
-  }
+  flameVAngle = msg->data;
 }
 
 void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
@@ -137,19 +136,19 @@ int main(int argc, char** argv){
             angle.data = flameVAngle;
             fanAngle_pub.publish(angle);
             timer = 0.0;
-	    stateChanged = false;
+            stateChanged = false;
           }
 
           if (timer == 0.0 && flameVAngle == -1.0) {
             timer = ros::Time::now().sec;
           }
-	  ROS_WARN("%f",ros::Time::now().sec - timer);
+          ROS_WARN("%f",ros::Time::now().sec - timer);
           if (timer != 0.0 && ros::Time::now().sec - timer > 4.0) {
             std_msgs::Float32 angle;
-	    angle.data = -1.0;
+            angle.data = -1.0;
             fanAngle_pub.publish(angle);
             state = 6;
-	    stateChanged = true;
+            stateChanged = true;
           }
           break;
         }
