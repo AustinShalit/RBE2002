@@ -111,7 +111,7 @@ int main(int argc, char** argv){
           twist_pub.publish(twist);
 
           // Lol... who would use time?
-          if ((ros::Time::now().sec - timer) * 2.0 > 7) {
+          if ((ros::Time::now().sec - timer) > 7) {
             ROS_INFO("2: Spin complete");
             twist.angular.z = 0.0;
             twist_pub.publish(twist);
