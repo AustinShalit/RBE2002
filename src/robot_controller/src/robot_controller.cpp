@@ -74,31 +74,45 @@ int main(int argc, char** argv){
   ros::Rate loop_rate(10);
   uint32_t timer = 0;
 
+  ROS_INFO("Creating Explore Object");
   explore::Explore explore;
+  ROS_INFO("Explore created!");
 
   while(ros::ok()) {
     if (robotEnabled) {
       switch (state) {
         case 0: {
           // Nothing
+          break;
         }
         case 1: {
-          ROS_INFO("Making explore plan");
-          explore.makePlan();
+          ROS_INFO("1: Making explore plan");
+          if (stateChanged) {
+            stateChanged = false;
+            explore.makePlan();
+          }
+
+          if (ac->getState().isDone()) {
+            state++;
+            ROS_INFO("Got to frontier");
+            stateChanged = true;
+          }
           break;
         }
         case 2: {
           if (stateChanged) {
+            ROS_INFO("2: Spin");
             timer = ros::Time::now().sec;
             stateChanged = false;
             ac->cancelAllGoals();
           }
           geometry_msgs::Twist twist;
-          twist.angular.z = 0.5;
+          twist.angular.z = 2.0;
           twist_pub.publish(twist);
 
           // Lol... who would use time?
-          if ((ros::Time::now().sec - timer) * 0.5 > 7) {
+          if ((ros::Time::now().sec - timer) * 2.0 > 7) {
+            ROS_INFO("2: Spin complete");
             twist.angular.z = 0.0;
             twist_pub.publish(twist);
             state = 1;
@@ -107,6 +121,8 @@ int main(int argc, char** argv){
           break;
         }
         case 3: {
+          ROS_INFO("3: Turn to face candle");
+          ac->cancelAllGoals(); // Cancel old goals
           // Turn to face candle
           move_base_msgs::MoveBaseGoal goal;
 
@@ -121,6 +137,7 @@ int main(int argc, char** argv){
           break;
         }
         case 4: {
+          ROS_INFO("4: Calculate position");
           // Calculate candle position
           geometry_msgs::PointStamped flameLoc;
           flameLoc.header.frame_id = "neato_laser";
@@ -132,6 +149,7 @@ int main(int argc, char** argv){
           break;
         }
         case 5: {
+          ROS_INFO("5: Blow");
           // Blow out candle
           // Enable the blower
           // Exit: Wait for candle to be out and then start timer for some seconds
@@ -145,10 +163,12 @@ int main(int argc, char** argv){
           }
 
           if (timer == 0 && flameVAngle == -1.0) {
+            ROS_INFO("5: Setting timer");
             timer = ros::Time::now().sec;
           }
 
           if (timer != 0 && ros::Time::now().sec - timer > 4) {
+            ROS_INFO("5: Complete");
             std_msgs::Float32 angle;
             angle.data = -1.0;
             fanAngle_pub.publish(angle);
@@ -158,6 +178,7 @@ int main(int argc, char** argv){
           break;
         }
         case 6: {
+          ROS_INFO("6: Home");
           // Return home
           // Send move goal as 0, 0, 0 with a fixed frame of map
           // Exit: Move goal success
@@ -167,8 +188,12 @@ int main(int argc, char** argv){
           goal.target_pose.header.frame_id = "map";
           goal.target_pose.header.stamp = ros::Time::now();
 
+          goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+
           ac->sendGoal(goal);
           ac->waitForResult();
+          ROS_INFO("6: We are Home");
+          state = 0;
           break;
         }
       }
