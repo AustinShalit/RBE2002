@@ -18,10 +18,11 @@
     <param name="xmax" value="5.0"/>
     <param name="ymax" value="5.0"/>
     <param name="delta" value="0.05"/>
-    <param name="maxRange" value="1.5"/>
-    <param name="maxUrange" value="1.0"/>
+    <param name="maxRange" value="2.5"/>
+    <param name="maxUrange" value="2.0"/>
     <param name="map_update_interval" value="-1.0"/>
     <param name="minimumScore" value="0.0"/>
+    <param name="delta" value="0.04"/>
   </node>
 
   <!--
@@ -39,8 +40,8 @@
     <param name="min_frontier_size" value="10"/>
   </node>
   -->
-
+  <!--
   <node pkg="robot_controller" type="robot_controller" name="robot_controller" output="screen" />
-
+  -->
   <include file="$(env HOME)/RBE2002/launch/move_base.launch" />
 </launch>
