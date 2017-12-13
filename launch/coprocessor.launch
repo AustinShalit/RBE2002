@@ -11,8 +11,8 @@
 
   <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">
     <param name="odom_frame" value="odom"/>
-    <param name="linearUpdate" value="0.5"/>
-    <param name="angularUpdate" value="3.0"/>
+    <param name="linearUpdate" value="0.4"/>
+    <param name="angularUpdate" value="1.0"/>
     <param name="xmin" value="-5.0"/>
     <param name="ymin" value="-5.0"/>
     <param name="xmax" value="5.0"/>
@@ -22,7 +22,7 @@
     <param name="maxUrange" value="2.0"/>
     <param name="map_update_interval" value="-1.0"/>
     <param name="minimumScore" value="0.0"/>
-    <param name="delta" value="0.04"/>
+    <param name="delta" value="0.035"/>
   </node>
 
   <!--
