@@ -39,6 +39,16 @@ void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
     if (state >= 1 && state < 3) {
       state = 3;
       stateChanged = true;
+      ac->cancelAllGoals(); // Cancel old goals
+      // Turn to face candle
+      move_base_msgs::MoveBaseGoal goal;
+
+      goal.target_pose.header.frame_id = "base_link";
+      goal.target_pose.header.stamp = ros::Time::now();
+
+      goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameHAngle);
+
+      ac->sendGoal(goal);
     }
   }
 
@@ -122,16 +132,6 @@ int main(int argc, char** argv){
         }
         case 3: {
           ROS_INFO("3: Turn to face candle");
-          ac->cancelAllGoals(); // Cancel old goals
-          // Turn to face candle
-          move_base_msgs::MoveBaseGoal goal;
-
-          goal.target_pose.header.frame_id = "base_link";
-          goal.target_pose.header.stamp = ros::Time::now();
-
-          goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameHAngle);
-
-          ac->sendGoal(goal);
           ac->waitForResult();
           state = 4;
           break;
@@ -144,6 +144,9 @@ int main(int argc, char** argv){
           flameLoc.header.stamp = ros::Time::now();
           flameLoc.point.x = distFwd;
           flameLoc.point.z = 0.21 + (distFwd * tan(flameVAngle));
+
+          tf::TransformListener listener(ros::Duration(10));
+          listener.transformPoint("map", *flameLoc, flameLoc);
           flame_pub.publish(flameLoc);
           state = 5;
           break;
