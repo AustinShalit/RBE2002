@@ -40,15 +40,6 @@ void flameHAngleCallback(const std_msgs::Float32::ConstPtr& msg) {
       state = 3;
       stateChanged = true;
       ac->cancelAllGoals(); // Cancel old goals
-      // Turn to face candle
-      move_base_msgs::MoveBaseGoal goal;
-
-      goal.target_pose.header.frame_id = "base_link";
-      goal.target_pose.header.stamp = ros::Time::now();
-
-      goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameHAngle);
-
-      ac->sendGoal(goal);
     }
   }
 
@@ -131,28 +122,66 @@ int main(int argc, char** argv){
           break;
         }
         case 3: {
-          ROS_INFO("3: Turn to face candle");
-          ac->waitForResult();
-          state = 4;
+          if (stateChanged) {
+            ROS_INFO("3: Turn to face candle");
+            timer = ros::Time::now().sec;
+            stateChanged = false;
+            geometry_msgs::Twist twist;
+            twist_pub.publish(twist);
+          }
+          if ((ros::Time::now().sec - timer) > 2) {
+            // Turn to face candle
+            move_base_msgs::MoveBaseGoal goal;
+
+            goal.target_pose.header.frame_id = "base_link";
+            goal.target_pose.header.stamp = ros::Time::now();
+
+            goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameHAngle);
+
+            ac->sendGoal(goal);
+            ac->waitForResult();
+            state = 4;
+            stateChanged = true;
+          }
           break;
         }
         case 4: {
           ROS_INFO("4: Calculate position");
           // Calculate candle position
           geometry_msgs::PointStamped flameLoc;
-          flameLoc.header.frame_id = "neato_laser";
-          flameLoc.header.stamp = ros::Time::now();
+          flameLoc.header.frame_id = "base_link";
+          
           flameLoc.point.x = distFwd;
           flameLoc.point.z = 0.21 + (distFwd * tan(flameVAngle));
 
           tf::TransformListener listener(ros::Duration(10));
-          listener.transformPoint("map", *flameLoc, flameLoc);
+          flameLoc.header.stamp = ros::Time::now();
+
+          listener.waitForTransform("map", "base_link", ros::Time::now(), ros::Duration(5.0));
+          listener.transformPoint("map", flameLoc, flameLoc);
           flame_pub.publish(flameLoc);
           state = 5;
           break;
         }
         case 5: {
-          ROS_INFO("5: Blow");
+          if (distFwd > 0.5) {
+            move_base_msgs::MoveBaseGoal goal;
+
+            goal.target_pose.header.frame_id = "base_link";
+            goal.target_pose.header.stamp = ros::Time::now();
+
+            goal.target_pose.pose.position.x = distFwd / 2;
+            goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(flameHAngle);
+
+            ac->sendGoal(goal);
+            ac->waitForResult();
+            state = 4;
+          } else {
+            state = 6;
+          }
+        }
+        case 6: {
+          ROS_INFO("6: Blow");
           // Blow out candle
           // Enable the blower
           // Exit: Wait for candle to be out and then start timer for some seconds
@@ -166,22 +195,22 @@ int main(int argc, char** argv){
           }
 
           if (timer == 0 && flameVAngle == -1.0) {
-            ROS_INFO("5: Setting timer");
+            ROS_INFO("6: Setting timer");
             timer = ros::Time::now().sec;
           }
 
           if (timer != 0 && ros::Time::now().sec - timer > 4) {
-            ROS_INFO("5: Complete");
+            ROS_INFO("6: Complete");
             std_msgs::Float32 angle;
             angle.data = -1.0;
             fanAngle_pub.publish(angle);
-            state = 6;
+            state = 7;
             stateChanged = true;
           }
           break;
         }
-        case 6: {
-          ROS_INFO("6: Home");
+        case 7: {
+          ROS_INFO("7: Home");
           // Return home
           // Send move goal as 0, 0, 0 with a fixed frame of map
           // Exit: Move goal success
@@ -195,7 +224,7 @@ int main(int argc, char** argv){
 
           ac->sendGoal(goal);
           ac->waitForResult();
-          ROS_INFO("6: We are Home");
+          ROS_INFO("7: We are Home");
           state = 0;
           break;
         }
